@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Балансировщики: интерактивный тур</title>
+<style>
+:root{
+  --bg:#faf9f6;--surface:#ffffff;--surface-1:#f1efe8;
+  --text:#1f1e1c;--text-2:#5f5e5a;--text-3:#888780;
+  --border:rgba(0,0,0,.12);--border-strong:rgba(0,0,0,.24);
+  --accent:#185fa5;--accent-bg:#e6f1fb;--accent-border:#85b7eb;--on-accent:#ffffff;--ring:rgba(24,95,165,.35);
+  --danger:#a32d2d;--danger-bg:#fcebeb;--danger-border:#f09595;
+  --warn:#633806;--warn-bg:#faeeda;--warn-border:#ef9f27;
+  --ok:#3b6d11;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#1b1b1a;--surface:#242423;--surface-1:#2e2e2c;
+  --text:#ecebe6;--text-2:#b4b2a9;--text-3:#888780;
+  --border:rgba(255,255,255,.12);--border-strong:rgba(255,255,255,.26);
+  --accent:#85b7eb;--accent-bg:#0c447c;--accent-border:#378add;--on-accent:#042c53;--ring:rgba(133,183,235,.4);
+  --danger:#f7c1c1;--danger-bg:#501313;--danger-border:#a32d2d;
+  --warn:#fac775;--warn-bg:#412402;--warn-border:#854f0b;
+  --ok:#97c459;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:960px;margin:0 auto;padding:22px 16px 48px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+h1{font-size:20px;line-height:1.3;font-weight:650;margin:0}
+header p{margin:2px 0 0;font-size:14px;color:var(--text-2)}
+button{font:inherit;font-size:15px;line-height:1.3;color:var(--text);background:var(--surface);border:1px solid var(--border-strong);border-radius:10px;padding:8px 16px;cursor:pointer}
+button:hover{background:var(--surface-1)}
+button:active{transform:scale(.98)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+button.primary:hover{background:var(--accent);opacity:.9}
+button.ghost{background:transparent;border-color:transparent;color:var(--text-2)}
+.seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:12px;padding:3px;gap:3px;background:var(--surface)}
+.seg button{border:0;padding:6px 16px;border-radius:9px;font-weight:600;background:transparent}
+.seg button.on{background:var(--accent);color:var(--on-accent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.chips button{font-size:13px;padding:4px 11px;border-radius:999px;font-family:var(--mono)}
+.chips button.on{background:var(--accent-bg);border-color:var(--accent-border);color:var(--accent)}
+.chips button.done::before{content:"✓ ";color:var(--ok)}
+.tour{position:relative}
+.card{position:sticky;top:8px;z-index:30;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 18px;margin-bottom:14px;box-shadow:0 6px 20px rgba(0,0,0,.06)}
+.say{font-size:18px;line-height:1.5;font-weight:500}
+.after{font-size:16px;line-height:1.5;color:var(--accent);margin-top:6px}
+.after:empty{display:none}
+.after.show{animation:fin .4s ease-out}
+@keyframes fin{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.extra:empty{display:none}
+.extra{margin-top:10px;overflow-x:auto}
+.cardnav{display:flex;align-items:center;gap:8px;margin-top:12px}
+.dots{display:flex;gap:5px;margin-right:auto}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--border-strong)}
+.dots i.on{background:var(--accent)}
+.dots i.done{background:var(--accent-border)}
+.stage{position:relative;display:grid;grid-template-columns:150px minmax(0,1fr) 260px;gap:28px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:26px 24px;min-height:470px;overflow:hidden}
+.lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.lines path{stroke:var(--border-strong);stroke-width:1.5;stroke-dasharray:4 5;fill:none}
+.col{position:relative;z-index:1;display:flex;flex-direction:column;gap:14px}
+.devs{align-items:center;justify-content:center}
+.dev{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface)}
+.dev svg{width:32px;height:32px;color:var(--text-2)}
+.dev span{font-size:13px;color:var(--text-2)}
+.legend{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--text-2);margin-top:4px;padding:6px 8px;border-radius:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.mid{align-items:center;justify-content:center;gap:22px}
+.disp{width:100%;max-width:240px;text-align:center;padding:16px 14px;border-radius:16px;border:2px solid var(--accent-border);background:var(--accent-bg);transition:transform .15s}
+.disp.blink{transform:scale(1.05)}
+.disp .dl{font-size:12px;color:var(--accent)}
+.disp .dm{font-family:var(--mono);font-size:21px;font-weight:700;color:var(--accent);margin:2px 0 8px;word-break:break-word}
+.disp .dp{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
+.pill{font-size:12px;font-family:var(--mono);padding:2px 9px;border-radius:999px;background:var(--surface);color:var(--text-2);border:1px solid var(--border);line-height:1.6}
+button.pill{cursor:pointer;color:var(--text);border-color:var(--border-strong)}
+.obs{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;border:1px solid var(--border-strong);background:var(--surface);cursor:pointer;width:100%;max-width:240px}
+.obs svg{width:28px;height:28px;flex:none;color:var(--accent)}
+.obs b{display:block;font-family:var(--mono);font-size:14px}
+.obs small{display:block;font-size:12px;color:var(--text-2);line-height:1.3}
+.obs.off{background:var(--surface-1);border-style:dashed}
+.obs.off svg,.obs.off b{color:var(--text-3)}
+.spare{width:100%;max-width:240px;padding:10px 12px;border-radius:14px;border:1.5px dashed var(--border-strong);background:var(--surface-1);cursor:pointer;text-align:center}
+.sp1{font-weight:600;font-size:14px}
+.sp2{font-size:12px;color:var(--text-2);font-family:var(--mono)}
+.spare .tray{justify-content:center}
+.cours{gap:12px}
+.cour{position:relative;padding:10px 12px;border-radius:14px;border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:background .2s,border-color .2s}
+.cour.dead{background:var(--danger-bg);border-color:var(--danger-border)}
+.cour.cut{border-style:dashed;border-color:var(--warn-border)}
+.row1{display:flex;align-items:center;gap:8px}
+.num{width:20px;height:20px;border-radius:50%;background:var(--surface-1);font-size:11px;display:inline-flex;align-items:center;justify-content:center;color:var(--text-2);font-weight:600;flex:none}
+.nm{font-weight:600;font-size:15px}
+.pg{margin-left:auto;font-family:var(--mono);font-size:13px;color:var(--text-2);padding:0 4px;border-radius:4px;white-space:nowrap}
+.cour.dead .nm,.cour.dead .pg{color:var(--danger)}
+.pg.flash{animation:fl 1s}
+@keyframes fl{0%,40%{background:var(--warn-bg);color:var(--warn)}100%{background:transparent}}
+.tag{position:absolute;top:-10px;right:10px;font-size:11px;font-weight:600;padding:1px 9px;border-radius:999px;background:var(--accent);color:var(--on-accent);line-height:1.6}
+.tag.cutt{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-border)}
+.tray{display:flex;flex-wrap:wrap;gap:3px;min-height:11px;margin-top:6px}
+.dot{width:11px;height:11px;border-radius:50%}
+.dot.new{animation:pop .35s}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.5)}100%{transform:scale(1)}}
+.more{font-size:11px;color:var(--text-3);line-height:11px}
+.spark{display:flex;align-items:flex-end;gap:3px;height:26px;margin-top:6px}
+.spark span{flex:1;background:var(--accent-border);border-radius:2px 2px 0 0}
+.sdv{font-size:11px;color:var(--text-2);margin-top:2px}
+.letter{position:absolute;z-index:6;left:0;top:0;transform:translate(-50%,-50%);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap;pointer-events:none;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.pingdot{position:absolute;z-index:5;left:0;top:0;width:9px;height:9px;border-radius:50%;background:var(--text-3);transform:translate(-50%,-50%);pointer-events:none}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:14px 0 0;min-height:42px}
+.ring{position:absolute;z-index:20;pointer-events:none;border:2.5px solid var(--accent);border-radius:18px;animation:pulse 1.4s ease-in-out infinite;transition:left .35s,top .35s,width .35s,height .35s}
+.ring.soft{border-style:dashed;animation:none}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 var(--ring)}50%{box-shadow:0 0 0 9px transparent}}
+.cursor{position:absolute;z-index:21;pointer-events:none;width:26px;height:30px;animation:bob 1s ease-in-out infinite;transition:left .35s,top .35s}
+@keyframes bob{0%,100%{transform:translate(0,0)}50%{transform:translate(-6px,-6px)}}
+.hidden{display:none!important}
+table.cheat{border-collapse:collapse;width:100%;font-size:14px;min-width:420px}
+.cheat th,.cheat td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--border)}
+.cheat th{font-weight:600;color:var(--text-2);font-size:13px}
+.cheat tr:last-child td{border-bottom:0}
+.cheat code{font-family:var(--mono);font-size:13px;background:var(--surface-1);padding:1px 5px;border-radius:4px}
+@media (max-width:700px){
+  .stage{grid-template-columns:minmax(0,1fr);gap:20px;padding:16px 12px;min-height:0}
+  .devs{flex-direction:row;flex-wrap:wrap}
+  .legend{flex-direction:row;flex-wrap:wrap;gap:10px;margin:0}
+  .cours{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px 10px}
+  .cour{padding:9px 10px}
+  .row1{flex-wrap:wrap;row-gap:0;gap:6px}
+  .nm{font-size:14px}
+  .pg{flex-basis:100%;margin-left:26px;padding:0}
+  .say{font-size:16px}
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <h1>Балансировщики mihomo и Xray</h1>
+    <p>Делай то, что показывает рамка.</p>
+  </div>
+  <div class="seg" id="eng"><button data-e="m" class="on">mihomo</button><button data-e="x">Xray</button></div>
+</header>
+<div class="chips" id="chips"></div>
+
+<div class="tour" id="tour">
+  <div class="card">
+    <div class="say" id="say"></div>
+    <div class="after" id="after"></div>
+    <div class="extra" id="extra"></div>
+    <div class="cardnav">
+      <div class="dots" id="dots"></div>
+      <button class="ghost" id="restart">Заново</button>
+      <button class="primary" id="next">Дальше</button>
+    </div>
+  </div>
+
+  <div class="stage" id="stage">
+    <svg class="lines" id="lines"></svg>
+    <div class="col devs" data-f="devices">
+      <div class="dev" id="dev-phone" data-f="dev-phone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>
+        <span id="phone-l">Ты</span>
+      </div>
+      <div class="dev hidden" id="dev-laptop">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg>
+        <span>Ноутбук</span>
+      </div>
+      <div class="legend hidden" id="legend" data-f="legend">
+        <span><i style="background:#D9443F"></i>youtube</span>
+        <span><i style="background:#6E62D6"></i>github</span>
+        <span><i style="background:#16936B"></i>google</span>
+      </div>
+    </div>
+    <div class="col mid">
+      <div class="obs hidden" id="obs" data-t="obs" data-f="obs">
+        <svg id="eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg id="eye-off" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3 11s3.6 5 9 5 9-5 9-5"/><path d="M5.5 14l-1.6 2.1M9.2 15.6l-.7 2.4M14.8 15.6l.7 2.4M18.5 14l1.6 2.1"/></svg>
+        <div><b>observatory</b><small id="obs-s">смотрит за курьерами</small></div>
+      </div>
+      <div class="disp" id="disp" data-f="disp">
+        <div class="dl" id="dl">диспетчер</div>
+        <div class="dm" id="dm">select</div>
+        <div class="dp" id="dp"></div>
+      </div>
+      <div class="spare hidden" id="spare" data-t="spare" data-f="spare">
+        <div class="sp1">Запасной выход</div>
+        <div class="sp2" id="spare-s">fallbackTag: direct</div>
+        <div class="tray" id="spare-tray"></div>
+      </div>
+    </div>
+    <div class="col cours" id="cours" data-f="couriers"></div>
+  </div>
+
+  <div class="ctrl">
+    <button class="primary" id="bsend" data-t="send">Отправить письмо</button>
+    <button id="bhc" data-t="hc">Проверка пинга</button>
+  </div>
+
+  <div class="ring hidden" id="ring"></div>
+  <svg class="cursor hidden" id="cursor" viewBox="0 0 26 30"><path d="M3 2 L3 24 L9 18.5 L13 27 L17 25 L13 16.8 L21 16.8 Z" fill="var(--text)" stroke="var(--surface)" stroke-width="2" stroke-linejoin="round"/></svg>
+</div>
+</main>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ---------- данные ---------- */
+const NAMES=['Германия','Нидерланды','Финляндия','Польша'];
+const MP=[80,45,120,60];
+const XS=[[60,150,90,40,130],[148,152,150,149,151],[30,110,50,95,25],[100,120,110,105,115]];
+const XPROF=[[90,55],[150,3],[62,45],[110,8]];
+const SITES={
+  yt:{k:'youtube',l:'youtube',c:'#D9443F'},
+  myt:{k:'youtube',l:'m.youtube',c:'#D9443F'},
+  gh:{k:'github',l:'github',c:'#6E62D6'},
+  gg:{k:'google',l:'google',c:'#16936B'}
+};
+const PREF={
+  youtube:[2,3,0,1],github:[0,1,3,2],google:[1,3,2,0],
+  'phone|youtube':[2,0,1,3],'laptop|youtube':[0,3,2,1],
+  'phone|github':[1,2,3,0],'laptop|github':[3,1,0,2],
+  'phone|google':[3,1,2,0],'laptop|google':[1,0,3,2]
+};
+const MODE_LABEL={select:'select','url-test':'url-test',fallback:'fallback','lb-rr':'load-balance','lb-ch':'load-balance','lb-ss':'load-balance','x-random':'random','x-rr':'roundRobin','x-lp':'leastPing','x-ll':'leastLoad'};
+
+/* ---------- состояние ---------- */
+const S={};
+function reset(eng,mode,o={}){
+  Object.assign(S,{eng,mode,sel:1,cur:-1,tol:50,rr:-1,stick:{},obs:true,fb:true,maxRTT:0,expected:2,devices:1,legend:false,spark:false,known:true,seq:[],spareTray:[],spareFresh:false,free:false});
+  S.nodes=NAMES.map((n,i)=>({n,a:true,p:MP[i],s:XS[i].slice(),tray:[],fresh:false}));
+  Object.assign(S,o);
+  if(mode==='url-test')S.cur=fastest();
+  document.querySelectorAll('.letter,.pingdot').forEach(e=>e.remove());
+}
+const alive=()=>S.nodes.map((x,i)=>i).filter(i=>S.nodes[i].a);
+const avg=i=>{const s=S.nodes[i].s;return s.reduce((a,b)=>a+b,0)/s.length};
+const sd=i=>{const s=S.nodes[i].s,m=avg(i);return Math.sqrt(s.reduce((a,b)=>a+(b-m)**2,0)/s.length)};
+const ping=i=>S.eng==='x'?Math.round(avg(i)):S.nodes[i].p;
+function fastest(){let b=-1;for(const i of alive())if(b<0||ping(i)<ping(b))b=i;return b}
+function rnd(){return S.seq.length?S.seq.shift():Math.random()}
+function mk(spec){
+  if(typeof spec==='number'){const o=['yt','gh','gg'];return Array.from({length:spec},(_,i)=>({dev:'phone',site:SITES[o[i%3]]}))}
+  return spec.split(' ').map(t=>{let d='phone',s=t;if(t.includes(':')){const[a,b]=t.split(':');d=a==='l'?'laptop':'phone';s=b}return{dev:d,site:SITES[s]}});
+}
+function randomLetters(n){const o=['yt','gh','gg'];return Array.from({length:n},()=>({dev:S.devices>1&&Math.random()<.5?'laptop':'phone',site:SITES[o[Math.floor(Math.random()*3)]]}))}
+
+/* ---------- логика выбора ---------- */
+function react(){
+  if(S.mode!=='url-test')return;
+  if(!alive().length){S.cur=-1;return}
+  if(S.cur<0||!S.nodes[S.cur].a)S.cur=fastest();
+}
+function evalUT(){
+  const b=fastest();
+  if(b<0){S.cur=-1;return}
+  if(S.cur<0||!S.nodes[S.cur].a){S.cur=b;return}
+  if(b!==S.cur&&S.nodes[S.cur].p-S.nodes[b].p>S.tol)S.cur=b;
+}
+function pref(k){const l=PREF[k]||[0,1,2,3];for(const i of l)if(S.nodes[i].a)return{to:i};return{to:-1,lost:true}}
+function choose(L){
+  const N=S.nodes,al=alive();
+  switch(S.mode){
+    case 'select':return{to:S.sel,lost:!N[S.sel].a};
+    case 'url-test':react();return S.cur<0?{to:-1,lost:true}:{to:S.cur};
+    case 'fallback':return al.length?{to:al[0]}:{to:-1,lost:true};
+    case 'lb-rr':if(!al.length)return{to:-1,lost:true};do{S.rr=(S.rr+1)%N.length}while(!N[S.rr].a);return{to:S.rr};
+    case 'lb-ch':return pref(L.site.k);
+    case 'lb-ss':{const k=L.dev+'|'+L.site.k;if(S.stick[k]!==undefined&&N[S.stick[k]].a)return{to:S.stick[k]};const r=pref(k);if(r.to>=0)S.stick[k]=r.to;return r}
+    case 'x-random':case 'x-rr':{
+      const c=(S.obs&&S.fb)?al:N.map((x,i)=>i);
+      if(!c.length)return{to:'spare'};
+      let i;
+      if(S.mode==='x-random')i=c[Math.floor(rnd()*c.length)];
+      else{S.rr++;i=c[S.rr%c.length]}
+      return{to:i,lost:!N[i].a};
+    }
+    case 'x-lp':{if(!S.obs||!al.length)return{to:'spare'};let b=al[0];for(const i of al)if(avg(i)<avg(b))b=i;return{to:b}}
+    case 'x-ll':{
+      if(!S.obs)return{to:'spare'};
+      const c=al.filter(i=>!S.maxRTT||avg(i)<S.maxRTT);
+      if(!c.length)return{to:'spare'};
+      c.sort((a,b)=>sd(a)-sd(b));
+      const top=c.slice(0,S.expected);
+      return{to:top[Math.floor(rnd()*top.length)]};
+    }
+  }
+}
+
+/* ---------- отрисовка ---------- */
+function params(){
+  switch(S.mode){
+    case 'select':return `<span class="pill">выбран: ${S.nodes[S.sel].n}</span>`;
+    case 'url-test':return `<span class="pill">tolerance ${S.tol} мс</span>`;
+    case 'fallback':return `<span class="pill">по порядку: №1 → №4</span>`;
+    case 'lb-rr':return `<span class="pill">strategy: round-robin</span>`;
+    case 'lb-ch':return `<span class="pill">strategy: consistent-hashing</span>`;
+    case 'lb-ss':return `<span class="pill">strategy: sticky-sessions</span>`;
+    case 'x-ll':return `<span class="pill">expected ${S.expected}</span><button class="pill" data-t="maxrtt">maxRTT: ${S.maxRTT?S.maxRTT+' мс':'нет'}</button>`;
+    default:return '';
+  }
+}
+function trayHTML(arr,fresh){
+  const vis=arr.slice(-24);
+  return vis.map((c,k)=>`<span class="dot${fresh&&k===vis.length-1?' new':''}" style="background:${c}"></span>`).join('')+(arr.length>24?`<span class="more">+${arr.length-24}</span>`:'');
+}
+function courHTML(i){
+  const x=S.nodes[i];
+  const cut=S.mode==='x-ll'&&S.maxRTT&&x.a&&S.obs&&avg(i)>=S.maxRTT;
+  let tag='';
+  if(S.mode==='select'&&i===S.sel)tag='выбран';
+  if(S.mode==='url-test'&&i===S.cur)tag='текущий';
+  if(S.mode==='fallback'&&i===alive()[0])tag='главный';
+  let pg;
+  if(!x.a)pg='сломан';
+  else if(S.eng==='x'&&(!S.obs||!S.known))pg='? мс';
+  else pg=ping(i)+' мс';
+  const spark=S.spark&&S.obs&&x.a?`<div class="spark">${x.s.map(v=>`<span style="height:${Math.min(100,Math.round(v/160*100))}%"></span>`).join('')}</div><div class="sdv">разброс ±${Math.round(sd(i))} мс</div>`:'';
+  return `<div class="cour${x.a?'':' dead'}${cut?' cut':''}" data-t="node${i}" id="c${i}">${tag?`<span class="tag">${tag}</span>`:''}${cut?`<span class="tag cutt">медленнее ${S.maxRTT}</span>`:''}<div class="row1"><span class="num">${i+1}</span><span class="nm">${x.n}</span><span class="pg" id="pg${i}">${pg}</span></div>${spark}<div class="tray">${trayHTML(x.tray,x.fresh)}</div></div>`;
+}
+function draw(){
+  const x=S.eng==='x';
+  $('#cours').innerHTML=S.nodes.map((_,i)=>courHTML(i)).join('');
+  S.nodes.forEach(n=>n.fresh=false);
+  $('#dl').textContent=x?'balancer':'диспетчер';
+  $('#dm').textContent=MODE_LABEL[S.mode];
+  $('#dp').innerHTML=params();
+  $('#obs').classList.toggle('hidden',!x);
+  $('#spare').classList.toggle('hidden',!x);
+  $('#obs').classList.toggle('off',!S.obs);
+  $('#eye-on').classList.toggle('hidden',!S.obs);
+  $('#eye-off').classList.toggle('hidden',S.obs);
+  $('#obs-s').textContent=S.obs?'смотрит за курьерами':'выключена';
+  $('#spare-s').textContent=S.fb?'fallbackTag: direct':'fallbackTag нет → первый outbound';
+  $('#spare-tray').innerHTML=trayHTML(S.spareTray,S.spareFresh);S.spareFresh=false;
+  $('#dev-laptop').classList.toggle('hidden',S.devices<2);
+  $('#phone-l').textContent=S.devices>1?'Телефон':'Ты';
+  $('#legend').classList.toggle('hidden',!S.legend);
+  $('#bhc').textContent=x?'Замеры observatory':'Проверка пинга';
+  requestAnimationFrame(()=>{drawLines();placeRing()});
+}
+function rel(el){const r=el.getBoundingClientRect(),s=$('#stage').getBoundingClientRect();return{l:r.left-s.left,t:r.top-s.top,r:r.right-s.left,b:r.bottom-s.top,cx:r.left-s.left+r.width/2,cy:r.top-s.top+r.height/2}}
+function link(a,b){
+  if(b.l>=a.r){const m=(a.r+b.l)/2;return `M${a.r},${a.cy} C${m},${a.cy} ${m},${b.cy} ${b.l},${b.cy}`}
+  if(b.t>=a.b){const m=(a.b+b.t)/2;return `M${a.cx},${a.b} C${a.cx},${m} ${b.cx},${m} ${b.cx},${b.t}`}
+  if(a.t>=b.b)return link(b,a);
+  return `M${a.cx},${a.cy} L${b.cx},${b.cy}`;
+}
+function drawLines(){
+  const d=rel($('#disp')),ps=[];
+  ['#dev-phone','#dev-laptop'].forEach(s=>{const e=$(s);if(!e.classList.contains('hidden'))ps.push(link(rel(e),d))});
+  S.nodes.forEach((_,i)=>{const c=$('#c'+i);if(c)ps.push(link(d,rel(c)))});
+  if(S.eng==='x'){ps.push(link(rel($('#obs')),d));ps.push(link(d,rel($('#spare'))))}
+  $('#lines').innerHTML=ps.map(p=>`<path d="${p}"/>`).join('');
+}
+
+/* ---------- анимации ---------- */
+const ctr=el=>{const r=rel(el);return{x:r.cx,y:r.cy}};
+async function fly(el,a,b,dur){
+  el.style.left=a.x+'px';el.style.top=a.y+'px';
+  const an=el.animate([{transform:'translate(-50%,-50%)'},{transform:`translate(calc(-50% + ${b.x-a.x}px),calc(-50% + ${b.y-a.y}px))`}],{duration:dur,easing:'cubic-bezier(.45,0,.25,1)',fill:'forwards'});
+  await an.finished;
+  el.style.left=b.x+'px';el.style.top=b.y+'px';an.cancel();
+}
+async function lose(e){
+  e.textContent='✕ потерялось';e.style.background='#C93A3A';
+  await e.animate([
+    {transform:'translate(-50%,-50%)'},
+    {transform:'translate(calc(-50% - 7px),-50%)'},
+    {transform:'translate(calc(-50% + 7px),-50%)'},
+    {transform:'translate(calc(-50% - 4px),-50%)',opacity:1,offset:.5},
+    {transform:'translate(-50%,calc(-50% + 34px))',opacity:0}
+  ],{duration:1100,easing:'ease-in'}).finished;
+  e.remove();
+}
+async function letter(L,dec){
+  const e=document.createElement('div');
+  e.className='letter';e.textContent=L.site.l;e.style.background=L.site.c;
+  $('#stage').appendChild(e);
+  const d=$('#disp');
+  await fly(e,ctr($(L.dev==='laptop'?'#dev-laptop':'#dev-phone')),ctr(d),420);
+  d.classList.add('blink');setTimeout(()=>d.classList.remove('blink'),170);
+  if(dec.to===-1){await lose(e);return}
+  const tgt=dec.to==='spare'?$('#spare'):$('#c'+dec.to);
+  await fly(e,ctr(d),ctr(tgt),500);
+  if(dec.lost){await lose(e);return}
+  e.remove();
+  if(dec.to==='spare'){S.spareTray.push(L.site.c);S.spareFresh=true}
+  else{S.nodes[dec.to].tray.push(L.site.c);S.nodes[dec.to].fresh=true}
+  draw();
+}
+async function sendLetters(list){
+  const ps=[];
+  for(const L of list){ps.push(letter(L,choose(L)));await wait(300)}
+  await Promise.all(ps);
+}
+function shake(el){el.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:350})}
+async function pingAll(apply){
+  if(S.eng==='x'&&!S.obs){shake($('#obs'));return}
+  const src=S.eng==='x'?$('#obs'):$('#disp'),a=ctr(src);
+  await Promise.all(S.nodes.map(async(x,i)=>{
+    const p=document.createElement('div');p.className='pingdot';$('#stage').appendChild(p);
+    const b=ctr($('#c'+i));
+    await fly(p,a,b,420);
+    if(!x.a){p.style.background='#C93A3A';await p.animate([{opacity:1},{opacity:0}],{duration:350}).finished;p.remove();return}
+    await fly(p,b,a,420);p.remove();
+  }));
+  if(apply)apply();
+  if(S.mode==='url-test')evalUT();
+  draw();
+  S.nodes.forEach((_,i)=>{const e=$('#pg'+i);if(e)e.classList.add('flash')});
+}
+
+/* ---------- уроки ---------- */
+const CHEAT=`<table class="cheat"><thead><tr><th>Что нужно</th><th>mihomo</th><th>Xray</th></tr></thead><tbody>
+<tr><td>Выбирать самому</td><td><code>select</code></td><td>—</td></tr>
+<tr><td>Самый быстрый</td><td><code>url-test</code></td><td><code>leastPing</code></td></tr>
+<tr><td>Главный + запасные</td><td><code>fallback</code></td><td><code>fallbackTag</code> (один запасной)</td></tr>
+<tr><td>По кругу</td><td><code>round-robin</code></td><td><code>roundRobin</code></td></tr>
+<tr><td>Случайно</td><td>—</td><td><code>random</code></td></tr>
+<tr><td>У сайта свой курьер</td><td><code>consistent-hashing</code></td><td>—</td></tr>
+<tr><td>Устройство + сайт</td><td><code>sticky-sessions</code></td><td>—</td></tr>
+<tr><td>Самый ровный</td><td>—</td><td><code>leastLoad</code></td></tr>
+</tbody></table>`;
+
+const LESSONS={
+m:[
+{name:'Знакомство',setup:()=>reset('m','select'),steps:[
+  {say:'Это ты. Ты отправляешь письма — это запросы к сайтам.',f:'dev-phone'},
+  {say:'Это курьеры — серверы из подписки. Цифра справа — пинг: за сколько миллисекунд курьер добегает.',f:'couriers'},
+  {say:'А это диспетчер. Он решает, какой курьер понесёт письмо.',f:'disp'},
+  {say:'Нажми «Отправить письмо».',t:'send',letters:'yt',after:'Письмо прошло через диспетчера и досталось курьеру.'},
+  {say:'Диспетчер умеет проверять курьеров. Нажми «Проверка пинга».',t:'hc',pings:[85,40,115,65],after:'Каждому дали пробное письмо и засекли время. Это health-check.'}
+]},
+{name:'select',setup:()=>reset('m','select'),steps:[
+  {say:'select — это пульт: курьера выбираешь ты сам. Нажми на Финляндию.',t:'node2',do:()=>{S.sel=2},after:'Выбрана Финляндия.'},
+  {say:'Отправь 3 письма.',t:'send',label:'Отправить 3',letters:'yt gh gg',after:'Все ушли выбранному. На пинг select не смотрит.'},
+  {say:'Теперь сломай Финляндию — нажми на неё.',t:'node2',do:()=>{S.nodes[2].a=false},after:'Финляндия сломалась.'},
+  {say:'Отправь письмо.',t:'send',letters:'yt',after:'Письмо потерялось: select не проверяет, жив ли курьер. Переключать — только руками.'}
+]},
+{name:'url-test',setup:()=>reset('m','url-test'),steps:[
+  {say:'url-test сам выбирает самого быстрого курьера.',f:'node1'},
+  {say:'Отправь 4 письма.',t:'send',label:'Отправить 4',letters:'yt gh gg yt',after:'Все — самому быстрому.'},
+  {say:'Время от времени диспетчер перепроверяет пинги. Нажми «Проверка пинга».',t:'hc',pings:[80,75,120,60],after:'Польша быстрее всего на 15 мс, а допуск — 50 мс. Остаёмся на Нидерландах.'},
+  {say:'Ещё раз «Проверка пинга».',t:'hc',pings:[80,140,120,60],after:'Теперь Польша быстрее на 80 мс — это больше допуска. Переключились.'},
+  {say:'Допуск (tolerance) нужен, чтобы диспетчер не прыгал после каждой проверки и твой IP не скакал.',f:'disp'},
+  {say:'Сломай Польшу.',t:'node3',do:()=>{S.nodes[3].a=false},after:'Текущий сломался — диспетчер сразу взял самого быстрого из живых.'},
+  {free:true}
+]},
+{name:'fallback',setup:()=>reset('m','fallback'),steps:[
+  {say:'fallback смотрит на порядок, а не на скорость. Курьер №1 — главный.',f:'node0'},
+  {say:'Отправь 3 письма.',t:'send',label:'Отправить 3',letters:'yt gh gg',after:'Все у №1, хотя Нидерланды быстрее.'},
+  {say:'Сломай Германию.',t:'node0',do:()=>{S.nodes[0].a=false},after:'№1 сломан — главным стал следующий по списку.'},
+  {say:'Отправь 2 письма.',t:'send',label:'Отправить 2',letters:'yt gh',after:'Носит №2.'},
+  {say:'Почини Германию.',t:'node0',do:()=>{S.nodes[0].a=true},after:'Главный вернулся — письма снова у него.'},
+  {free:true}
+]},
+{name:'round-robin',setup:()=>reset('m','lb-rr',{legend:true}),steps:[
+  {say:'load-balance раздаёт письма разным курьерам. Способ 1 — по кругу. Отправь 8 писем.',t:'send',label:'Отправить 8',letters:'yt gh gg yt gh gg yt gh',after:'1, 2, 3, 4, 1, 2… Нагрузка ровная.'},
+  {say:'Посмотри на цвета: письма одного сайта разъехались по разным курьерам. Сайт видит тебя с разных IP — отсюда капчи.',f:'couriers'},
+  {say:'Сломай Финляндию.',t:'node2',do:()=>{S.nodes[2].a=false},after:'Финляндия выбыла.'},
+  {say:'Отправь 6 писем.',t:'send',label:'Отправить 6',letters:6,after:'Сломанную просто пропускают.'},
+  {free:true}
+]},
+{name:'consistent-hashing',setup:()=>reset('m','lb-ch',{legend:true}),steps:[
+  {say:'Способ 2, стоит по умолчанию: у каждого сайта свой курьер. Цвет письма — это сайт.',f:'legend'},
+  {say:'Отправь 9 писем.',t:'send',label:'Отправить 9',letters:'yt gh gg gh yt gg yt gg gh',after:'Все красные — у одного курьера, фиолетовые — у другого, зелёные — у третьего.'},
+  {say:'m.youtube.com — это тоже YouTube. Отправь.',t:'send',label:'Отправить m.youtube',letters:'myt',after:'Поддомен считается тем же сайтом — тот же курьер.'},
+  {say:'Сломай курьера YouTube — Финляндию.',t:'node2',do:()=>{S.nodes[2].a=false},after:'Свой курьер YouTube сломан.'},
+  {say:'Отправь 3 письма YouTube.',t:'send',label:'Отправить 3',letters:'yt yt yt',after:'YouTube временно переехал к другому курьеру.'},
+  {say:'Почини Финляндию.',t:'node2',do:async()=>{S.nodes[2].a=true;draw();await wait(250);await sendLetters(mk('yt yt'))},after:'Починили — YouTube вернулся к своему.'},
+  {free:true}
+]},
+{name:'sticky-sessions',setup:()=>reset('m','lb-ss',{legend:true,devices:2}),steps:[
+  {say:'Способ 3: курьер закрепляется за парой «устройство + сайт».',f:'devices'},
+  {say:'Отправь YouTube с телефона и с ноутбука.',t:'send',label:'Отправить 2',letters:'p:yt l:yt',after:'Сайт один, устройства разные — и курьеры разные.'},
+  {say:'Отправь ещё 6 писем.',t:'send',label:'Отправить 6',letters:'p:yt l:yt p:gh l:gh p:yt l:gh',after:'Каждая пара держится за своего курьера. Закрепление живёт 10 минут.'},
+  {free:true}
+]}
+],
+x:[
+{name:'observatory',setup:()=>reset('x','x-random',{known:false}),steps:[
+  {say:'В Xray те же курьеры, но диспетчер (balancer) слепой. За курьерами смотрит отдельный модуль — observatory.',f:'obs'},
+  {say:'Нажми «Замеры observatory».',t:'hc',after:'Теперь диспетчер знает пинги и кто жив.'},
+  {say:'А это запасной выход — fallbackTag. Туда идут письма, когда выбрать некого.',f:'spare'}
+]},
+{name:'random',setup:()=>reset('x','x-random',{legend:true}),steps:[
+  {say:'random — это кубик. Отправь 8 писем.',t:'send',label:'Отправить 8',letters:8,seq:[.6,.1,.9,.3,.55,.8,.05,.4],after:'Кому выпало — тот и несёт.'},
+  {say:'Сломай Германию.',t:'node0',do:()=>{S.nodes[0].a=false},after:'observatory видит, что Германия сломана.'},
+  {say:'Отправь 6 писем.',t:'send',label:'Отправить 6',letters:6,seq:[.1,.5,.9,.4,.7,.2],after:'Сломанную пропускают: включены и observatory, и fallbackTag.'},
+  {say:'Выключи fallbackTag — нажми на запасной выход.',t:'spare',do:()=>{S.fb=false},after:'fallbackTag выключен.'},
+  {say:'Отправь 6 писем.',t:'send',label:'Отправить 6',letters:6,seq:[.1,.4,.6,.15,.9,.3],after:'Часть писем потерялась: без fallbackTag random не вычёркивает мёртвых, даже если observatory их видит.'},
+  {free:true}
+]},
+{name:'roundRobin',setup:()=>reset('x','x-rr',{legend:true}),steps:[
+  {say:'roundRobin — по кругу. Отправь 8 писем.',t:'send',label:'Отправить 8',letters:8,after:'По очереди, как раздача карт.'},
+  {say:'Подвох тот же, что у random: мёртвых пропускает, только если включены и observatory, и fallbackTag.',f:'spare'},
+  {free:true}
+]},
+{name:'leastPing',setup:()=>reset('x','x-lp'),steps:[
+  {say:'leastPing отдаёт письма самому быстрому по замерам. Отправь 4 письма.',t:'send',label:'Отправить 4',letters:4,after:'Все у Финляндии — у неё самый маленький пинг.'},
+  {say:'Нажми «Замеры observatory».',t:'hc',samples:{0:[80,90,85,88,82],2:[90,100,95,92,98]},after:'Германия стала быстрее Финляндии на 10 мс.'},
+  {say:'Отправь 2 письма.',t:'send',label:'Отправить 2',letters:2,after:'Уже у Германии. Допуска, как у url-test, тут нет: чуть быстрее — сразу главный.'},
+  {say:'Выключи observatory — нажми на неё.',t:'obs',do:()=>{S.obs=false},after:'Диспетчер ослеп: пингов не видно.'},
+  {say:'Отправь письмо.',t:'send',letters:1,after:'Выбирать не из чего — письмо ушло в запасной выход.'},
+  {free:true}
+]},
+{name:'leastLoad',setup:()=>reset('x','x-ll',{spark:true}),steps:[
+  {say:'leastLoad выбирает не самого быстрого, а самого ровного. Столбики — последние замеры.',f:'couriers'},
+  {say:'Финляндия — кролик: быстрая, но дёргается. Нидерланды — черепаха: медленные, зато ровные.',f:'node1'},
+  {say:'Отправь 8 писем.',t:'send',label:'Отправить 8',letters:8,seq:[.2,.7,.4,.9,.1,.6,.3,.8],after:'Письма делят двое самых ровных. Сколько их — задаёт expected.'},
+  {say:'Отрежем медленных: нажми на maxRTT в диспетчере.',t:'maxrtt',do:()=>{S.maxRTT=125},after:'maxRTT = 125 мс. Нидерланды медленнее — вылетают.'},
+  {say:'Отправь 6 писем.',t:'send',label:'Отправить 6',letters:6,seq:[.3,.8,.1,.6,.4,.9],after:'Теперь письма делят Польша и Финляндия.'},
+  {free:true}
+]},
+{name:'Итог',setup:()=>reset('x','x-random'),steps:[
+  {say:'Шпаргалка: что чем заменить.',html:CHEAT}
+]}
+]};
+const FREE_M='Теперь сам: отправляй письма, жми «Проверка пинга», тыкай курьеров — они ломаются и чинятся.';
+const FREE_X='Теперь сам: отправляй письма, делай замеры, тыкай курьеров, observatory и запасной выход — они выключаются и включаются.';
+
+/* ---------- движок тура ---------- */
+let E='m',LI=0,SI=0,busy=false,ringT=null,ringAct=false;
+const done={m:new Set(),x:new Set()};
+const lesson=()=>LESSONS[E][LI];
+const step=()=>lesson().steps[SI];
+
+function startLesson(e,i){E=e;LI=i;SI=0;lesson().setup();enter()}
+function enter(){
+  const st=step();
+  draw();
+  let say=st.free?(E==='x'?FREE_X:FREE_M):st.say;
+  if(st.free&&S.mode==='x-ll')say+=' maxRTT в диспетчере тоже нажимается.';
+  $('#say').textContent=say;
+  $('#extra').innerHTML=st.html||'';
+  const af=$('#after');af.textContent='';af.classList.remove('show');
+  S.free=!!st.free;
+  $('#bsend').classList.toggle('hidden',!(st.t==='send'||st.free));
+  $('#bhc').classList.toggle('hidden',!(st.t==='hc'||st.free));
+  $('#bsend').textContent=st.free?'Отправить 4':(st.label||'Отправить письмо');
+  renderNav();
+  if(st.t){$('#next').classList.add('hidden');showRing(st.t,true)}
+  else{$('#next').classList.remove('hidden');showRing(st.f||null,false)}
+}
+function renderNav(){
+  document.querySelectorAll('#eng button').forEach(b=>b.classList.toggle('on',b.dataset.e===E));
+  $('#chips').innerHTML=LESSONS[E].map((l,i)=>`<button data-l="${i}" class="${i===LI?'on':''}${done[E].has(i)&&i!==LI?' done':''}">${l.name}</button>`).join('');
+  $('#dots').innerHTML=lesson().steps.map((_,i)=>`<i class="${i===SI?'on':i<SI?'done':''}"></i>`).join('');
+  const last=SI===lesson().steps.length-1;
+  $('#next').textContent=!last?'Дальше':LI<LESSONS[E].length-1?'Следующий урок →':E==='m'?'Перейти к Xray →':'Начать сначала';
+}
+function showRing(k,act){ringT=k;ringAct=act;placeRing(true)}
+function hideRing(){ringT=null;placeRing()}
+function placeRing(scroll){
+  const r=$('#ring'),c=$('#cursor');
+  const el=ringT&&(document.querySelector(`[data-t="${ringT}"]`)||document.querySelector(`[data-f="${ringT}"]`));
+  if(!el||el.offsetParent===null){r.classList.add('hidden');c.classList.add('hidden');return}
+  const a=el.getBoundingClientRect(),b=$('#tour').getBoundingClientRect(),p=7;
+  Object.assign(r.style,{left:a.left-b.left-p+'px',top:a.top-b.top-p+'px',width:a.width+2*p+'px',height:a.height+2*p+'px'});
+  r.classList.remove('hidden');r.classList.toggle('soft',!ringAct);
+  c.classList.toggle('hidden',!ringAct);
+  if(ringAct){c.style.left=(a.left-b.left+a.width/2+4)+'px';c.style.top=(a.top-b.top+a.height/2+2)+'px'}
+  if(scroll){const card=document.querySelector('.card').getBoundingClientRect();if(a.top<card.bottom||a.bottom>innerHeight)el.scrollIntoView({behavior:'smooth',block:'center'})}
+}
+async function act(st){
+  if(st.do)await st.do();
+  if(st.t==='send'){if(st.seq)S.seq=st.seq.slice();await sendLetters(mk(st.letters??1))}
+  else if(st.t==='hc'){
+    await pingAll(()=>{
+      if(st.pings)st.pings.forEach((p,i)=>S.nodes[i].p=p);
+      if(st.samples)for(const k in st.samples)S.nodes[k].s=st.samples[k].slice();
+      S.known=true;
+    });
+  }
+  react();draw();
+}
+async function freeAct(t){
+  if(t==='send')await sendLetters(randomLetters(4));
+  else if(t==='hc')await pingAll(()=>{
+    if(S.eng==='x')S.nodes.forEach((x,i)=>{const[b,j]=XPROF[i];x.s=Array.from({length:5},()=>Math.max(10,Math.round(b+(Math.random()*2-1)*j)))});
+    else S.nodes.forEach(x=>x.p=5*Math.round((30+Math.random()*170)/5));
+    S.known=true;
+  });
+  else if(t.startsWith('node')){const i=+t.slice(4);S.nodes[i].a=!S.nodes[i].a}
+  else if(t==='obs')S.obs=!S.obs;
+  else if(t==='spare')S.fb=!S.fb;
+  else if(t==='maxrtt'){const o=[0,125,100,150];S.maxRTT=o[(o.indexOf(S.maxRTT)+1)%o.length]}
+  react();draw();
+}
+$('#tour').addEventListener('click',async ev=>{
+  const el=ev.target.closest('[data-t]');
+  if(!el||busy)return;
+  const t=el.dataset.t,st=step();
+  if(st.t){
+    if(t!==st.t){shake($('#ring'));return}
+    busy=true;hideRing();
+    await act(st);
+    const af=$('#after');af.textContent=st.after||'';af.classList.remove('show');void af.offsetWidth;af.classList.add('show');
+    $('#next').classList.remove('hidden');
+    busy=false;return;
+  }
+  if(S.free){busy=true;await freeAct(t);busy=false}
+});
+$('#next').onclick=()=>{
+  if(busy)return;
+  if(SI<lesson().steps.length-1){SI++;enter();return}
+  done[E].add(LI);
+  if(LI<LESSONS[E].length-1)startLesson(E,LI+1);
+  else if(E==='m')startLesson('x',0);
+  else startLesson('m',0);
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+$('#restart').onclick=()=>{if(!busy)startLesson(E,LI)};
+$('#chips').addEventListener('click',ev=>{const b=ev.target.closest('[data-l]');if(b&&!busy)startLesson(E,+b.dataset.l)});
+document.querySelectorAll('#eng button').forEach(b=>b.onclick=()=>{if(!busy&&b.dataset.e!==E)startLesson(b.dataset.e,0)});
+window.addEventListener('resize',()=>{drawLines();placeRing()});
+
+startLesson('m',0);
+})();
+</script>
+</body>
+</html>
